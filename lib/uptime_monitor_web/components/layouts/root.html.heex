@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="Uptime Monitor" suffix={assigns[:title_suffix] || " · Uptime Monitor"}>
+      {assigns[:page_title]}
+    </.live_title>
+    <%!-- Theme before first paint (no flash of the wrong theme): light | dark | system (default).
+         Also stores the browser UTC offset for server-rendered local times. --%>
+    <script>
+      (function(){var q=new URLSearchParams(location.search).get('theme'),s;try{if(q&&['light','dark','system'].indexOf(q)>-1)localStorage.setItem('um-theme',q);s=localStorage.getItem('um-theme')}catch(e){}var p=(q&&['light','dark','system'].indexOf(q)>-1?q:s)||'system';if(['light','dark','system'].indexOf(p)<0)p='system';var d=p==='dark'||(p==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.dataset.themePref=p;document.cookie='um_tz='+(-new Date().getTimezoneOffset()*60)+';path=/;SameSite=Lax';})();
+    </script>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
+    </script>
+  </head>
+  <body>
+    <.icon_sprite />
+    {@inner_content}
+  </body>
+</html>

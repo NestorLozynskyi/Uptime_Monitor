@@ -1,0 +1,14 @@
+#!/bin/sh
+# Container entrypoint: migrate, create the admin from ADMIN_EMAIL/ADMIN_PASSWORD
+# (only if none exists), seed demo data when DEMO_SEED=true, then start the server.
+set -eu
+cd -P -- "$(dirname -- "$0")"
+
+if [ -z "${SECRET_KEY_BASE:-}" ]; then
+  SECRET_KEY_BASE="$(head -c 48 /dev/urandom | base64 | tr -d '\n')"
+  export SECRET_KEY_BASE
+  echo "SECRET_KEY_BASE is not set: generated an ephemeral key (sessions reset on restart)."
+fi
+
+./uptime_monitor eval "UptimeMonitor.Release.setup()"
+PHX_SERVER=true exec ./uptime_monitor start

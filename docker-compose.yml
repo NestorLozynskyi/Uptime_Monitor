@@ -1,0 +1,54 @@
+# Local demo: `docker compose up` starts PostgreSQL, the app and the demo
+# target HTTP service. Migrations, the admin account and demo data are set up
+# automatically on first start. Values can be overridden in a .env file
+# (see .env.example).
+name: uptime-monitor
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: uptime_monitor
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d uptime_monitor"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # Test HTTP service used as the monitoring target (success, delays, errors,
+  # redirects, flaky and cyclic outages). Reachable only inside the network.
+  demo-target:
+    build: .
+    command: ["/app/bin/demo-target"]
+    environment:
+      DEMO_TARGET_PORT: "4100"
+
+  app:
+    build: .
+    ports:
+      - "${APP_PORT:-4000}:4000"
+    environment:
+      DATABASE_URL: ecto://postgres:${POSTGRES_PASSWORD:-postgres}@db/uptime_monitor
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-}
+      PHX_HOST: ${PHX_HOST:-localhost}
+      PHX_URL_SCHEME: http
+      PHX_URL_PORT: ${APP_PORT:-4000}
+      PORT: "4000"
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-uptime-demo-2026}
+      DEMO_SEED: "true"
+      DEMO_TARGET_URL: http://demo-target:4100
+      # The demo target has a private Docker IP; allow only that host name.
+      SSRF_ALLOWLIST: demo-target
+    depends_on:
+      db:
+        condition: service_healthy
+      demo-target:
+        condition: service_started
+
+volumes:
+  db_data:

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Runs only the demo target HTTP service (UptimeMonitor.Demo.Target).
+set -eu
+cd -P -- "$(dirname -- "$0")"
+DEMO_TARGET_ONLY=true exec ./uptime_monitor eval "UptimeMonitor.Demo.Target.serve()"
